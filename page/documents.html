@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>업체 서류관리 | PreCheck · 한솔홀딩스</title>
+  <link data-brand-asset="mark-auto" rel="icon" type="image/svg+xml" href="../resources/images/precheck-mark.svg?v=20260917">
+  <script>try { if (localStorage.getItem('theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (_) {}</script>
+  <script src="../resources/js/brand.js?v=20260917"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../resources/css/global.css?v=20260917">
+  <link rel="stylesheet" href="../resources/css/common.css?v=20260917">
+  <link rel="stylesheet" href="../resources/css/page.css?v=20260917">
+  <script defer src="../resources/js/slur.js?v=20260917"></script>
+  <script defer src="../resources/js/navigation.js?v=20260917"></script>
+  <script defer src="../resources/js/appearance.js?v=20260917"></script>
+  <script defer src="../resources/js/data.js?v=20260917"></script>
+  <script defer src="../resources/js/documents.js?v=20260917"></script>
+</head>
+<body data-menu="documents">
+  <a class="skip_link" href="#main">본문으로 이동</a>
+  <div class="layout_app">
+    <aside id="app_side" class="l_side" data-state="close" aria-label="안전관리 사이드바" data-field="navigation"></aside>
+    <main id="main" class="l_main"><div class="page_documents">
+      <header class="p_header"><div><div class="p_title_row"><button class="btn_menu p_menu" type="button" data-action="drawer_open" aria-controls="app_side" aria-expanded="false" aria-label="업무 메뉴 열기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><h1>업체 서류관리</h1></div><p>제출부터 검토·보완·갱신까지, 업체 서류를 한곳에서 관리합니다.</p></div></header>
+      <div class="p_workgrid" id="documentWorkspace" data-state="standalone">
+        <section class="card p_controls" id="documentControls" aria-labelledby="documentSearchTitle" hidden>
+          <h2 id="documentSearchTitle">업체 검색</h2>
+          <p class="p_help">업체명이나 업종으로 서류 현황을 확인하세요.</p>
+          <label class="p_label" for="q">업체명 또는 업종</label>
+          <div class="p_search_control"><input class="input_text" type="search" id="q" placeholder="예: 협력업체 A, 배관공사" autocomplete="off"><button class="btn" id="resetSearch" type="button">초기화</button></div>
+          <label class="p_label" for="site">사업장</label>
+          <select class="input_text p_filter" id="site"><option>제1사업장</option><option>제2사업장</option><option>제3사업장</option></select>
+          <fieldset class="p_status_filter"><legend class="p_label">서류 상태</legend><div class="p_filters" id="filters">
+            <button class="btn m_small" data-f="all" aria-pressed="true">전체</button><button class="btn m_small" data-f="review" aria-pressed="false">검토 대기</button><button class="btn m_small" data-f="need" aria-pressed="false">재제출 필요</button><button class="btn m_small" data-f="over" aria-pressed="false">기한 지남</button><button class="btn m_small" data-f="ok" aria-pressed="false">유효</button>
+          </div></fieldset>
+          <section class="p_summary" aria-labelledby="documentSummaryTitle"><h3 id="documentSummaryTitle">사업장 제출 안내</h3><p id="siteSummary">서류 목록을 확인하고 업체를 등록하세요.</p><div class="p_counts"><span>필수 <strong id="requiredCount">–</strong></span><span>선택 <strong id="optionalCount">–</strong></span></div><button class="btn" id="addOpen" type="button">신규 업체 추가</button></section>
+          <nav class="p_view_actions" id="tabs" aria-label="서류관리 화면" hidden><button class="btn" id="t3" aria-pressed="true">전체 서류 현황</button><button class="btn m_ghost" id="t1" aria-pressed="false">업체 제출 화면 미리보기 ↗</button></nav>
+          <p class="p_count" id="qcnt" role="status" aria-live="polite"></p>
+          <ul class="p_results" id="vendorResults" aria-label="업체 검색 결과"></ul>
+        </section>
+        <div class="p_content">
+<!-- 로그인 -->
+<div class="p_panel" id="pLogin" hidden>
+  <div class="card p_loginbox">
+    <h3>관리자 로그인</h3>
+    <p class="p_sub">서류 현황은 안전환경팀 담당자만 볼 수 있습니다.</p>
+    <div class="p_lf"><label for="lid">아이디</label><input class="input_text" type="text" id="lid" autocomplete="off"></div>
+    <div class="p_lf"><label for="lpw">비밀번호</label><input class="input_text" type="password" id="lpw" autocomplete="off"></div>
+    <button class="btn m_primary" id="doLogin">로그인</button>
+    <p class="p_loginhint">목업이라 아무 값이나 넣으시면 들어갑니다. 비워 두고 누르셔도 됩니다.</p>
+  </div>
+</div>
+
+<!-- 서류 현황 -->
+<section class="card p_panel p_overview" id="pList" aria-labelledby="overviewTitle" hidden>
+  <header class="p_entity_head"><span class="p_avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 3h7l4 4v14H6V3h1Zm7 0v5h4M9 12h6m-6 4h6"/></svg></span><div class="p_identity"><h2 id="overviewTitle">전체 업체 서류 현황</h2><p id="overviewDescription">제출·검토·갱신 현황을 한눈에 확인합니다.</p></div><span class="badge" id="overviewSite">제1사업장</span></header>
+  <div class="p_body">
+    <dl class="p_metrics" aria-label="현재 검색 결과 서류 현황"><div class="p_metric"><dt>전체 업체</dt><dd id="metricTotal">–</dd></div><div class="p_metric"><dt>검토 대기</dt><dd id="metricReview">–</dd></div><div class="p_metric"><dt>재제출 필요</dt><dd id="metricNeed">–</dd></div><div class="p_metric"><dt>유효</dt><dd id="metricValid">–</dd></div></dl>
+  <div class="p_bulkbar" id="bulkbar" hidden>
+    <span id="bulkTxt"></span>
+    <button class="btn m_primary m_small" id="bulkSend">선택한 업체에 한꺼번에 요청</button>
+    <button class="btn m_ghost m_small" id="bulkClear">선택 해제</button>
+    <span role="status" class="p_okmsg" id="bulkMsg"></span>
+  </div>
+  <p class="p_sectitle">검토를 기다립니다 <span class="badge" id="n0"></span></p>
+  <div class="p_table_gap table_wrap p_table_wrap"><div class="i_scroll" tabindex="0" role="region" aria-label="업체 서류 현황 표"><table class="table_data p_table">
+      <thead><tr><th scope="col"><span class="a11y_hidden">선택</span></th><th scope="col">업체</th><th scope="col">제출 서류</th><th scope="col">상태·기한</th><th scope="col">최근 제출·요청</th><th scope="col">관리</th></tr></thead>
+      <tbody id="tbNew"></tbody>
+    </table></div>
+  </div>
+  <p class="p_sectitle">재제출이 필요합니다 <span class="badge" id="n1"></span></p>
+  <div class="p_table_gap table_wrap p_table_wrap"><div class="i_scroll" tabindex="0" role="region" aria-label="업체 서류 현황 표"><table class="table_data p_table">
+      <thead><tr><th scope="col"><span class="a11y_hidden">선택</span></th><th scope="col">업체</th><th scope="col">제출 서류</th><th scope="col">상태·기한</th><th scope="col">최근 제출·요청</th><th scope="col">관리</th></tr></thead>
+      <tbody id="tbNeed"></tbody>
+    </table></div>
+  </div>
+  <p class="p_sectitle p_calm">유효합니다 <span class="badge" id="n2"></span></p>
+  <div class="table_wrap p_table_wrap"><div class="i_scroll" tabindex="0" role="region" aria-label="업체 서류 현황 표"><table class="table_data p_table">
+      <thead><tr><th scope="col"><span class="a11y_hidden">선택</span></th><th scope="col">업체</th><th scope="col">제출 서류</th><th scope="col">상태·기한</th><th scope="col">최근 제출·요청</th><th scope="col">관리</th></tr></thead>
+      <tbody id="tbOk"></tbody>
+    </table></div>
+  </div>
+  </div>
+</section>
+<!-- 업체 상세 -->
+<section class="card p_panel p_detail" id="pDet" aria-labelledby="detName" hidden>
+  <header class="p_entity_head"><span class="p_avatar" id="detAvatar" aria-hidden="true"></span><div class="p_identity"><h2 id="detName"></h2><p id="detSub"></p></div><span class="badge" id="detStatus"></span></header>
+  <div class="p_body">
+    <p class="p_backrow"><button class="btn m_ghost m_small" id="detBack">← 전체 서류 현황</button></p>
+    <dl class="p_metrics" aria-label="선택한 업체 서류 상태"><div class="p_metric"><dt>제출 서류</dt><dd id="detSubmitted">–</dd></div><div class="p_metric"><dt>보완 필요</dt><dd id="detIssues">–</dd></div><div class="p_metric"><dt>제출·갱신 기한</dt><dd id="detDue">–</dd></div><div class="p_metric"><dt>요청 기록</dt><dd id="detRequests">–</dd></div></dl>
+    <section class="p_info_block" aria-labelledby="vendorInfoTitle"><h3 id="vendorInfoTitle">업체 정보</h3><dl class="p_kv" id="detInfo"></dl></section>
+    <div class="p_approve" id="approveBox" hidden><p id="approveTxt"></p><button class="btn" id="doApprove">검토 완료 · 등록 승인</button></div>
+    <section class="p_document_section" aria-labelledby="documentListTitle"><div class="p_section_head"><div><h3 id="documentListTitle">제출된 서류</h3><p>서류를 확인하고 필요한 항목의 보완을 요청합니다.</p></div><span class="badge" id="detCount"></span></div><ul class="p_dlist" id="detDocs"></ul></section>
+    <div class="p_actions"><button class="btn" id="detReq">재제출 요청 보내기</button></div>
+    <section class="p_log_section" aria-labelledby="requestLogTitle"><div class="p_section_head"><h3 id="requestLogTitle">요청 발송 이력</h3><span class="badge" id="detLogN"></span></div><ul class="p_logs" id="detLogs"></ul></section>
+  </div>
+</section>
+<!-- 재제출 요청 -->
+<div class="card p_panel p_screen" id="pReq" hidden>
+  <p class="p_backrow"><button class="p_back" id="reqBack">← 돌아가기</button></p>
+  <h2 class="p_ph">재제출 요청</h2>
+  <p class="p_psub">재제출이 생기는 경우는 세 가지입니다. 어느 경우인지에 따라 요청하는 서류가 달라집니다. 기한은 1주일입니다.</p>
+  <div class="p_reasons">
+    <div class="p_rcard" id="r1"><p class="p_k">사유 1</p><h4>연 1회 갱신</h4>
+      <p>신규업체 등록은 연 1회 받습니다. 제출한 지 1년이 지나면 갱신 대상이 됩니다.</p>
+      <p class="p_n">요청 범위 — 서류 전체</p></div>
+    <div class="p_rcard" id="r2"><p class="p_k">사유 2</p><h4>2천만원 이상 공사</h4>
+      <p>등록을 마친 업체라도 공사금액이 2천만원 이상이면 다시 확인합니다.</p>
+      <p class="p_n">요청 범위 — 산재·근재보험, 작업계획</p></div>
+    <div class="p_rcard" id="r3"><p class="p_k">사유 3</p><h4>작성 미흡 보완</h4>
+      <p>제출된 서류의 작성 상태를 확인한 뒤, 미흡한 항목만 다시 요청합니다.</p>
+      <p class="p_n">요청 범위 — 걸린 항목만</p></div>
+  </div>
+  <div class="p_request_form">
+    <div class="p_card_head"><h3 id="cTitle">재제출 요청</h3><span class="badge" id="cWhy"></span></div>
+    <div class="p_form_body">
+      <dl class="p_kv">
+        <dt>최근 제출</dt><dd id="cLast"></dd>
+        <dt>발생 사유</dt><dd id="cCause"></dd>
+        <dt>받는 사람</dt><dd id="cTo"></dd>
+        <dt>요청 기한</dt><dd><b class="p_mono" id="cDue"></b> — 1주일</dd>
+        <dt>요청 서류</dt><dd><div class="p_only" id="cOnly"></div></dd>
+      </dl>
+      <div class="p_msgbox" id="cMsg"></div>
+      <div class="p_sendrow">
+        <button class="btn m_primary" id="mkLink">제출 링크 만들기</button>
+        <button class="btn m_ghost" id="copyMail">메일 양식 복사</button>
+        <button class="btn m_ghost" id="markSent">발송 기록 남기기</button>
+        <span role="status" class="p_okmsg" id="okMsg"></span>
+      </div>
+      <div class="p_linkbox" id="linkBox" hidden>
+        <p class="p_t">이 링크를 업체에 보내시면 됩니다. 로그인 없이 열립니다.</p>
+        <div class="p_linkrow">
+          <input class="input_text" type="text" id="linkVal" readonly aria-label="제출 링크">
+          <button class="btn m_ghost m_small" id="copyLink">링크 복사</button>
+          <button class="btn m_ghost m_small" id="openLink">열어 보기</button>
+        </div>
+      </div>
+      <p class="p_help">
+        기존처럼 메일이나 전화로 요청하셔도 됩니다. 이 화면은 그 방법을 없애지 않고, 링크 한 번으로 보내는 방법을 하나 더 두는 것입니다.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- 신규 업체 추가 -->
+<div class="card p_panel p_screen" id="pAdd" hidden>
+  <p class="p_backrow"><button class="p_back" id="addBack">← 서류 현황으로</button></p>
+  <h2 class="p_ph">신규 업체 추가</h2>
+  <p class="p_psub">업체 정보와 공사금액을 넣으면 필요한 서류와 제출 기한이 자동으로 정해집니다. 공사금액이 2천만원 이상이면 산재·근재보험과 작업계획을 함께 확인합니다.</p>
+  <div class="p_add_card">
+    <div class="p_form_body">
+      <div class="p_addgrid">
+        <div class="p_af"><label for="aName">업체명</label><input class="input_text" type="text" id="aName" required placeholder="예) 세림기공"></div>
+        <div class="p_af"><label for="aBiz">업종</label><input class="input_text" type="text" id="aBiz" placeholder="예) 배관공사"></div>
+        <div class="p_af"><label for="aTel">담당자 휴대전화</label><input class="input_text" type="tel" id="aTel" placeholder="010-0000-0000"></div>
+        <div class="p_af"><label for="aMail">담당자 메일</label><input class="input_text" type="text" id="aMail" placeholder="example@company.co.kr"></div>
+        <div class="p_af"><label for="aAmt">공사금액 (만원)</label><input class="input_text" type="number" id="aAmt" min="0" value="1500" step="100"></div>
+        <div class="p_af"><label for="aStart">착공일</label><input class="input_text" type="date" id="aStart" value="2026-09-28"></div>
+      </div>
+      <div class="p_judge" id="aJudge"></div><p id="addError" class="p_warn" role="alert"></p>
+      <p class="p_actions"><button class="btn m_primary" id="addSave">추가하고 요청 화면으로</button></p>
+    </div>
+  </div>
+</div>
+
+<!-- 업체 제출 화면 -->
+<div class="p_panel" id="pSubmit" hidden>
+  <div id="pvNote" class="p_previewnote" hidden>담당자 미리보기입니다. 업체가 링크로 열면 아래 화면만 보이고, 로그인 없이 접속됩니다.</div>
+  <div id="pvHead">
+    <p class="p_psub">서류마다 칸이 따로 있습니다. 파일을 합치지 않으셔도 됩니다. 어떻게 준비하는지 모르시면 <b>하는 방법</b>을, 양식이 필요하시면 <b>양식 받기</b>를 눌러 주십시오.</p>
+  </div>
+  <div id="subForm">
+    <div class="p_vend">
+      <div class="p_vpane p_top">
+        <h3>업체 등록 서류 제출</h3>
+        <p>한솔홀딩스 <span id="vSite">제1사업장</span></p>
+        <div class="p_due"><b id="vDue">9월 23일</b><span>까지 올려 주시면 됩니다</span></div>
+      </div>
+      <div class="p_join p_vpane p_who2">
+        <h4>업체 정보</h4>
+        <p>두 가지만 적어 주시면 됩니다. 나머지는 파일만 올리시면 됩니다.</p>
+        <div class="p_g">
+          <div><label for="vName">업체명</label><input class="input_text" type="text" id="vName" placeholder="예) 세림기공" autocomplete="organization"></div>
+          <div><label for="vTel">담당자 휴대전화</label><input class="input_text" type="tel" id="vTel" pattern="[0-9-]{10,13}" placeholder="010-0000-0000" inputmode="numeric" autocomplete="tel"></div>
+        </div>
+      </div>
+      <div class="p_join p_vpane p_vprog">
+        <progress class="p_progress" id="vBar" value="0" max="10" aria-label="서류 준비 진행률"></progress>
+        <p class="p_lb" id="vLb"></p>
+        <p class="p_saved" id="vSaved">서류 준비 내용은 이 브라우저에 임시 저장됩니다.</p>
+      </div>
+      <ul class="p_join p_docs p_vpane" id="vDocs"></ul>
+    </div>
+    <div class="p_vfoot"><button class="btn m_primary m_large" id="vSubmit" disabled>제출하기</button>
+      <p class="p_actions"><button class="p_back" id="vReset">처음부터 다시 하기</button></p></div>
+    <p class="p_vhelp">잘 안 되시면 안전환경팀으로 전화 주십시오. <b class="p_mono">000-0000-0000</b></p>
+  </div>
+  <input type="file" id="filePick" hidden aria-hidden="true" tabindex="-1">
+  <div id="subDone" hidden>
+    <div class="card p_doneview">
+      <h3>제출되었습니다</h3>
+      <p id="doneWho"></p>
+      <ul class="p_steps">
+        <li data-state="complete"><span class="p_m">1</span>제출 완료</li>
+        <li data-state="complete"><span class="p_m">2</span>담당자 확인 중</li>
+        <li><span class="p_m">3</span>등록 승인</li>
+      </ul>
+      <p class="p_muted">보완이 필요하면 적어 주신 번호로 안내가 갑니다. 이 브라우저에서 같은 링크를 다시 열어 확인하실 수 있습니다.</p>
+      <p class="p_actions"><button class="btn m_ghost" id="doneBack">제출 내용 다시 보기</button></p>
+    </div>
+  </div>
+</div>
+
+        </div>
+      </div>
+      <footer class="p_footer"><div class="p_notices"><p class="p_notice" id="storageStatus" role="status"></p></div><div class="p_authbar" id="authbar"></div></footer>
+    </div></main>
+  </div>
+  <noscript><p>서류관리를 이용하려면 JavaScript를 활성화해 주세요.</p></noscript>
+</body>
+</html>

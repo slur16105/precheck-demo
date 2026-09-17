@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>작업자 통합 이력 | PreCheck · 한솔홀딩스</title>
+  <link data-brand-asset="mark-auto" rel="icon" type="image/svg+xml" href="../resources/images/precheck-mark.svg?v=20260917">
+  <script>try { if (localStorage.getItem('theme') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (_) {}</script>
+  <script src="../resources/js/brand.js?v=20260917"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../resources/css/global.css?v=20260917">
+  <link rel="stylesheet" href="../resources/css/common.css?v=20260917">
+  <link rel="stylesheet" href="../resources/css/page.css?v=20260917">
+  <script defer src="../resources/js/slur.js?v=20260917"></script>
+  <script defer src="../resources/js/navigation.js?v=20260917"></script>
+  <script defer src="../resources/js/appearance.js?v=20260917"></script>
+  <script defer src="../resources/js/data.js?v=20260917"></script>
+  <script defer src="../resources/js/history.js?v=20260917"></script>
+</head>
+<body data-menu="history">
+  <a class="skip_link" href="#main">본문으로 이동</a>
+  <div class="layout_app">
+    <aside id="app_side" class="l_side" data-state="close" aria-label="안전관리 사이드바" data-field="navigation"></aside>
+    <main id="main" class="l_main"><div class="page_history">
+      <header class="p_header">
+        <div><div class="p_title_row"><button class="btn_menu p_menu" type="button" data-action="drawer_open" aria-controls="app_side" aria-expanded="false" aria-label="업무 메뉴 열기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><h1>방문자 안전·건강 이력</h1></div><p>업체 또는 작업자를 검색해 교육·문진·측정·작업 이력을 한 화면에서 확인합니다.</p></div>
+
+      </header>
+      <section class="history_data" data-field="data_state" data-state="loading" aria-label="작업자 데이터">
+        <div class="i_status" role="status">
+          <p class="i_loading"><span class="spinner" aria-hidden="true"></span> 작업자 정보를 불러오는 중입니다.</p>
+          <p class="i_empty">등록된 작업자가 없습니다.</p>
+          <div class="i_error"><p>작업자 정보를 불러오지 못했습니다.</p><button class="btn" type="button" data-action="retry">다시 불러오기</button></div>
+        </div>
+        <div class="i_body"><div class="p_grid">
+        <section class="card p_search" aria-labelledby="search_title">
+          <h2 id="search_title">방문자 검색</h2>
+          <p class="p_help">이름이나 업체명을 입력해 보세요.</p>
+          <label class="p_label" for="search_input">이름 또는 업체명</label>
+          <div class="p_search_control"><input class="input_text" id="search_input" data-field="search_input" type="search" placeholder="예: 홍길동, 협력업체 A" autocomplete="off"><button data-field="search_clear" class="btn" type="button">초기화</button></div>
+          <label class="p_label" for="company_filter">소속업체</label>
+          <select class="input_text p_filter" id="company_filter" data-field="company_filter"><option value="">전체 업체</option></select>
+          <section class="p_summary" aria-labelledby="company_title">
+            <h3 id="company_title" data-field="company_title">전체 업체 현황</h3>
+            <p>현재 검색 결과 기준</p>
+            <div class="p_counts"><span>작업자 <strong data-field="worker_total">–</strong></span><span>교육 이수 <strong data-field="education_total">–</strong></span><span>이상 이력 <strong data-field="anomaly_total">–</strong></span></div>
+            <button data-field="print_company" class="btn" type="button">업체 현황 출력 예시</button>
+          </section>
+          <p data-field="result_count" class="p_count" role="status" aria-live="polite"></p>
+          <ul data-field="worker_results" class="p_results"></ul>
+        </section>
+        <section id="worker_detail" data-field="worker_detail" class="card p_detail" aria-labelledby="worker_name" hidden>
+          <header class="p_worker_head">
+            <span data-field="worker_avatar" class="p_avatar" aria-hidden="true"></span>
+            <div class="p_identity"><h2 id="worker_name" data-field="worker_name"></h2><button data-field="worker_company" class="p_company" type="button"></button></div>
+            <span data-field="worker_badge" class="badge"></span>
+          </header>
+          <div class="p_body">
+            <dl class="p_metrics" aria-label="선택한 작업자 상태">
+              <div class="p_metric"><dt>안전교육</dt><dd data-field="education_status"></dd></div>
+              <div class="p_metric"><dt>건강문진</dt><dd data-field="questionnaire_status"></dd></div>
+              <div class="p_metric"><dt>최근 방문</dt><dd data-field="last_visit"></dd></div>
+              <div class="p_metric"><dt>과거 이상 이력</dt><dd data-field="anomaly_status"></dd></div>
+            </dl>
+            <section class="p_signature" aria-labelledby="signature_title">
+              <div class="p_section_head"><div><h3 id="signature_title">안전교육 이수 서명</h3><p data-field="signature_meta"></p></div></div>
+              <div class="p_signature_row"><div data-field="signature_sample" class="signature_sample"><span class="i_name" data-field="signature_name"></span><small class="i_note">가상 서명 · 실제 증빙 아님</small></div><button data-field="print_education" class="btn" type="button">교육 이수·서명 기록 출력 예시</button></div>
+              <p class="p_help">실제 서명 파일 연결과 원본 보관 방식은 확인이 필요합니다.</p>
+            </section>
+            <p class="alert m_inline p_permission">열람 권한 확인 필요 · 건강 측정 상세와 과거 조치 이력의 조회 범위는 협의 예정입니다.</p>
+            <section aria-labelledby="history_title">
+              <div class="p_section_head"><div><h3 id="history_title">방문·측정·작업 이력</h3><p>측정 결과와 이후 조치를 함께 확인합니다.</p></div></div>
+              <div class="table_wrap"><div class="i_scroll" tabindex="0" role="region" aria-label="방문·측정·작업 이력 표"><table class="table_data p_table"><thead><tr><th scope="col">방문일</th><th scope="col">방문 목적·작업 내용</th><th scope="col">안전교육</th><th scope="col">건강문진</th><th scope="col">혈압</th><th scope="col">음주측정</th><th scope="col">조치 내용</th><th scope="col">입문 여부</th></tr></thead><tbody data-field="history_body"></tbody></table></div></div>
+              <p class="p_help">가상 이력입니다. 혈압은 측정 수치만 표시하며, 확인이 필요한 기록은 조치 내용과 입문 여부 열에서 확인합니다.</p>
+            </section>
+          </div>
+        </section>
+        <section data-field="detail_empty" class="card p_empty" hidden><span class="a11y_hidden" aria-hidden="true">⌕</span><h2>검색 결과가 없습니다</h2><p>이름 또는 업체명을 다시 확인하거나 검색 조건을 초기화해 주세요.</p><button data-field="empty_reset" class="btn" type="button">전체 작업자 보기</button></section>
+      </div>
+      </div></section>
+      <p class="p_notice">과거 이상 이력은 현재 입문 가능 여부를 판정하지 않습니다.</p>
+      <p data-field="selection_status" class="a11y_hidden" role="status" aria-live="polite"></p>
+    </div></main>
+  </div>
+  <section data-field="print_area" class="print_record" aria-label="출력 예시"></section>
+  <noscript><p>검색과 이력 조회를 이용하려면 JavaScript를 활성화해 주세요.</p></noscript>
+</body>
+</html>
