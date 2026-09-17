@@ -238,7 +238,7 @@
 .page_education .p_tabs { display: flex; width: 100%; gap: 8px; padding: 0; border: 0; border-radius: 0; background: transparent; }
 .page_education .p_tabs .btn { width: auto; min-width: 116px; padding: 0 16px; border: 1px solid var(--color-border-default); background: var(--color-surface-card); }
 .page_education .p_tabs .btn[aria-pressed="true"] { border-color: var(--color-border-focus); background: var(--color-brand-soft); box-shadow: none; }
-.page_education .p_grid { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 2.3fr); align-items: start; gap: 16px; }
+.page_education .p_grid { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 16px; }
 .page_education .p_search { min-width: 0; padding: var(--space-20); overflow: visible; }
 .page_education .p_search h2 { font-size: var(--text-lg); }
 .page_education .p_help { margin-top: 8px; font-size: var(--text-xs); line-height: var(--leading-relaxed); color: var(--color-text-muted); }
