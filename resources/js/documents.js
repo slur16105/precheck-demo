@@ -376,9 +376,26 @@ function openDet(i){
   });
   go('det');
 }
+function downloadSample(id,v,msg){
+  var d=MASTER[id];
+  if(!d || !window.DocumentSample){
+    if(msg) msg.textContent='시연용 예시 데이터라 받을 파일이 없습니다. 업체가 올린 파일은 그대로 내려받아집니다.';
+    return;
+  }
+  if(msg) msg.textContent='샘플 파일을 만드는 중입니다…';
+  window.DocumentSample.make(d,v.nm,fmtLong(v.last)).then(function(out){
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(out.blob); a.download=out.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 60000);
+    if(msg) msg.textContent='시연용 샘플 파일을 내려받았습니다. 업체가 직접 올린 파일이 있으면 그 파일이 그대로 받아집니다.';
+  }).catch(function(){
+    if(msg) msg.textContent='이 화면에서는 받을 수 없습니다. 파일은 정상 접수되었습니다.';
+  });
+}
 function download(id){
   var v=vlist()[S.cur], f=filesFor(v,id)[0], msg=$('dm'+id);
-  if(!f){ if(msg) msg.textContent='시연용 예시 데이터라 받을 파일이 없습니다. 업체가 올린 파일은 그대로 내려받아집니다.'; return; }
+  if(!f){ downloadSample(id,v,msg); return; }
   if(msg) msg.textContent='';
   function anchor(){
     try{

@@ -12,8 +12,28 @@
       time: null, area: null, course: '당시 안전교육', progress: null, score: null,
       visitStatus: record.entryStatus === '입문' ? '방문 완료' : '방문 기록', historyId: worker.id, source: 'history' }];
   }));
-  const records = [...legacy, ...(demo?.visits || [])].sort((a, b) => (a.time || '99').localeCompare(b.time || '99') || a.workerName.localeCompare(b.workerName, 'ko'));
-  const companies = [...new Set(records.map(record => record.company))].sort((a, b) => a.localeCompare(b, 'ko'));
+  // 시연 데이터는 열 때마다 오늘 기준으로 다시 만들어진다. 그래서 원본은 그대로 두고
+  // 담당자가 손댄 것(추가·수정·삭제)만 따로 저장해 두었다가 그릴 때 덮어씌운다.
+  const STORE = 'precheck-visit-overrides-v1';
+  const emptyOverrides = () => ({ added: [], edits: {}, removed: [] });
+  let overrides = emptyOverrides();
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
+    if (saved && typeof saved === 'object') overrides = { ...emptyOverrides(), ...saved };
+  } catch (_) { overrides = emptyOverrides(); }
+  const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(overrides)); } catch (_) {} };
+  const changeCount = () => (overrides.added?.length || 0) + Object.keys(overrides.edits || {}).length + (overrides.removed?.length || 0);
+  const base = [...legacy, ...(demo?.visits || [])];
+  let records = [], companies = [];
+  function rebuild() {
+    const gone = new Set(overrides.removed || []);
+    records = [...base, ...(overrides.added || [])]
+      .filter(row => !gone.has(row.id))
+      .map(row => (overrides.edits && overrides.edits[row.id]) ? { ...row, ...overrides.edits[row.id] } : row)
+      .sort((a, b) => (a.time || '99').localeCompare(b.time || '99') || a.workerName.localeCompare(b.workerName, 'ko'));
+    companies = [...new Set(records.map(record => record.company))].sort((a, b) => a.localeCompare(b, 'ko'));
+  }
+  rebuild();
   const active = rows => rows.filter(row => row.visitStatus !== '취소');
   const done = rows => active(rows).filter(row => row.education === '교육 완료');
   const dateLabel = value => value.replaceAll('-', '.');
@@ -60,6 +80,91 @@
     stage.querySelector('#visitPageNext').onclick = () => { page++; expanded = null; renderList(); };
     stage.querySelectorAll('[data-visit-detail]').forEach(button => button.onclick = () => { const id = button.dataset.visitDetail; expanded = expanded === id ? null : id; renderList(); stage.querySelector(`[data-visit-detail="${id}"]`)?.focus(); });
   }
+  const AREAS = ['생산동', '설비동', '물류동', '관리동'];
+  const EDUCATIONS = ['교육 완료', '교육 중', '미시작', '미발송', '재평가 필요'];
+  const STATUSES = ['방문 예정', '방문 완료', '현장 체류', '미방문', '취소'];
+  const newId = () => 'custom-' + (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  function flash(text) { const box = stage?.querySelector('#visitFlash'); if (box) box.textContent = text; }
+  function reload(date, message) {
+    persist(); rebuild();
+    if (date) { selected = date; month = date.slice(0, 7); }
+    page = 1; expanded = null; render(stage);
+    if (message) flash(message);
+  }
+  function dialog(title, body, actions) {
+    stage.querySelector('#visitDialog')?.remove();
+    const box = document.createElement('dialog');
+    box.id = 'visitDialog'; box.className = 'p_preview_dialog p_visit_dialog';
+    box.innerHTML = `<div class="row"><h2>${esc(title)}</h2><button class="btn" type="button" data-close aria-label="닫기">닫기</button></div>${body}<p class="p_visit_error" id="visitError" role="alert"></p><div class="p_visit_dialog_act">${actions}</div>`;
+    stage.append(box);
+    box.querySelectorAll('[data-close]').forEach(button => button.onclick = () => box.close());
+    box.onclose = () => box.remove();
+    box.showModal();
+    return box;
+  }
+  const field = (label, control) => `<label class="p_visit_field"><span>${label}</span>${control}</label>`;
+  const options = (list, chosen) => list.map(value => `<option ${value === chosen ? 'selected' : ''}>${esc(value)}</option>`).join('');
+  function openForm(row) {
+    const draft = row || { date: selected, time: '08:00', company: company || '', workerName: '', job: '', area: AREAS[0], education: '미발송', visitStatus: '방문 예정' };
+    const box = dialog(row ? '일정 수정' : '일정 추가', `<div class="p_visit_form">
+      ${field('방문일', `<input class="input_text" id="fDate" type="date" value="${esc(draft.date)}">`)}
+      ${field('방문 시간', `<input class="input_text" id="fTime" type="time" value="${esc(draft.time || '')}">`)}
+      ${field('업체명', `<input class="input_text" id="fCompany" type="text" list="visitCompanyList" value="${esc(draft.company)}" placeholder="예) 가상 A설비">`)}
+      ${field('방문자 이름', `<input class="input_text" id="fName" type="text" value="${esc(draft.workerName)}" placeholder="예) 홍길동">`)}
+      ${field('작업 내용', `<input class="input_text" id="fJob" type="text" value="${esc(draft.job)}" placeholder="예) 배관 보수">`)}
+      ${field('작업 구역', `<select class="input_text" id="fArea">${options(AREAS, draft.area)}</select>`)}
+      ${field('교육 상태', `<select class="input_text" id="fEdu">${options(EDUCATIONS, draft.education)}</select>`)}
+      ${field('방문 상태', `<select class="input_text" id="fStatus">${options(STATUSES, draft.visitStatus)}</select>`)}
+    </div><datalist id="visitCompanyList">${companies.map(name => `<option value="${esc(name)}"></option>`).join('')}</datalist>`,
+      `<button class="btn m_primary" type="button" data-save>${row ? '수정 저장' : '일정 추가'}</button><button class="btn" type="button" data-close>취소</button>`);
+    box.querySelector('[data-save]').onclick = () => {
+      const value = id => box.querySelector(`#${id}`).value.trim();
+      const problem = box.querySelector('#visitError');
+      const date = value('fDate'), workerName = value('fName'), companyName = value('fCompany');
+      if (!date) { problem.textContent = '방문일을 골라 주세요.'; box.querySelector('#fDate').focus(); return; }
+      if (!companyName) { problem.textContent = '업체명을 적어 주세요.'; box.querySelector('#fCompany').focus(); return; }
+      if (!workerName) { problem.textContent = '방문자 이름을 적어 주세요.'; box.querySelector('#fName').focus(); return; }
+      const patch = { date, time: value('fTime') || null, company: companyName, workerName, job: value('fJob') || '작업 내용 미기재',
+        area: value('fArea'), education: value('fEdu'), visitStatus: value('fStatus') };
+      if (row) overrides.edits[row.id] = { ...(overrides.edits[row.id] || {}), ...patch };
+      else {
+        const id = newId();
+        overrides.added.push({ id, workerId: id, course: '현장 등록 일정', progress: null, score: null, historyId: null, source: 'custom', ...patch });
+      }
+      box.close();
+      reload(date, row ? '일정을 수정했습니다.' : '일정을 추가했습니다.');
+      stage.querySelector(row ? '#visitEdit' : '#visitAdd')?.focus();
+    };
+    box.querySelector('#fDate').focus();
+  }
+  function removeRow(row) {
+    if (!confirm(`${row.workerName} · ${row.company} · ${dateLabel(row.date)} 일정을 삭제하시겠습니까?`)) return;
+    if (String(row.id).startsWith('custom-')) overrides.added = (overrides.added || []).filter(item => item.id !== row.id);
+    else if (!(overrides.removed || []).includes(row.id)) overrides.removed.push(row.id);
+    if (overrides.edits) delete overrides.edits[row.id];
+    reload(null, '일정을 삭제했습니다.');
+    stage.querySelector('#visitRemove')?.focus();
+  }
+  function openPicker(mode) {
+    const rows = dayRows();
+    if (!rows.length) { flash('선택하신 날짜에 일정이 없습니다. 달력에서 다른 날짜를 골라 주세요.'); return; }
+    const box = dialog(mode === 'edit' ? '수정할 일정 고르기' : '삭제할 일정 고르기',
+      `<p class="p_visit_pick_note">${dateLabel(selected)} 일정 ${rows.length}건 가운데 하나를 고르세요.</p>
+       ${field('일정', `<select class="input_text" id="pickId">${rows.map(row => `<option value="${esc(row.id)}">${esc(row.workerName)} · ${esc(row.company)} · ${esc(row.time || '시간 미기록')} · ${esc(row.education)}</option>`).join('')}</select>`)}`,
+      `<button class="btn ${mode === 'edit' ? 'm_primary' : 'm_danger'}" type="button" data-go>${mode === 'edit' ? '이 일정 수정' : '이 일정 삭제'}</button><button class="btn" type="button" data-close>취소</button>`);
+    box.querySelector('[data-go]').onclick = () => {
+      const row = records.find(item => item.id === box.querySelector('#pickId').value);
+      box.close();
+      if (!row) { flash('일정을 찾지 못했습니다. 화면을 새로고침해 주세요.'); return; }
+      if (mode === 'edit') openForm(row); else removeRow(row);
+    };
+  }
+  function restore() {
+    if (!confirm('직접 추가·수정·삭제하신 내용을 모두 지우고 처음 시연 데이터로 되돌립니다. 계속하시겠습니까?')) return;
+    overrides = emptyOverrides();
+    reload(null, '시연 데이터로 되돌렸습니다.');
+    stage.querySelector('#visitToday')?.focus();
+  }
   function detail() {
     const rows = dayRows(), people = active(rows), completed = done(rows), cancelled = rows.filter(row => row.visitStatus === '취소');
     const label = selected < today ? '과거 방문' : selected === today ? '오늘 방문' : '방문 예정';
@@ -68,7 +173,7 @@
   function render(target) {
     stage = target;
     if (!data || !demo) { stage.innerHTML = '<div class="card p_visit_empty">방문일정 데이터를 불러오지 못했습니다. 새로고침해 주세요.</div>'; return; }
-    stage.innerHTML = `<div class="p_visit_intro"><div><h2>방문일정</h2><p>날짜별 방문 규모와 교육 준비 현황을 확인하세요.</p></div><span class="badge">가상 데이터 · 운영 시연</span></div><div class="p_visit_toolbar"><label>업체<select class="input_text" id="visitCompany"><option value="">전체 업체</option>${companies.map(name => `<option ${company === name ? 'selected' : ''}>${esc(name)}</option>`).join('')}</select></label><div><button class="btn" type="button" id="visitToday">오늘</button><button class="btn" type="button" id="visitBusiest">최다 방문일</button></div><p>시연 기간 ${dateLabel(demo.range[0])} – ${dateLabel(demo.range[1])}</p></div><div class="p_visit_layout">${calendar()}${detail()}</div>`;
+    stage.innerHTML = `<div class="p_visit_intro"><div><h2>방문일정</h2><p>날짜별 방문 규모와 교육 준비 현황을 확인하세요.</p></div><span class="badge">가상 데이터 · 운영 시연</span></div><div class="p_visit_toolbar"><label>업체<select class="input_text" id="visitCompany"><option value="">전체 업체</option>${companies.map(name => `<option ${company === name ? 'selected' : ''}>${esc(name)}</option>`).join('')}</select></label><div><button class="btn" type="button" id="visitToday">오늘</button><button class="btn" type="button" id="visitBusiest">최다 방문일</button><button class="btn m_primary" type="button" id="visitAdd">일정 추가</button><button class="btn" type="button" id="visitEdit" ${dayRows().length ? '' : 'disabled'}>일정 수정</button><button class="btn" type="button" id="visitRemove" ${dayRows().length ? '' : 'disabled'}>일정 삭제</button></div><p>시연 기간 ${dateLabel(demo.range[0])} – ${dateLabel(demo.range[1])}</p></div><p class="p_visit_flash"><span id="visitFlash" role="status"></span>${changeCount() ? `<span class="p_visit_changed">직접 바꾸신 일정 ${changeCount()}건 <button class="btn m_ghost m_small" type="button" id="visitRestore">시연 데이터로 되돌리기</button></span>` : ''}</p><div class="p_visit_layout">${calendar()}${detail()}</div>`;
     renderList();
     stage.querySelector('#visitPrev').onclick = () => shiftMonth(-1);
     stage.querySelector('#visitNext').onclick = () => shiftMonth(1);
@@ -78,6 +183,11 @@
       const busiest = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0];
       if (busiest) { selectDate(busiest); stage.querySelector('#visitBusiest').focus(); }
     };
+    stage.querySelector('#visitAdd').onclick = () => openForm(null);
+    stage.querySelector('#visitEdit').onclick = () => openPicker('edit');
+    stage.querySelector('#visitRemove').onclick = () => openPicker('remove');
+    const restoreButton = stage.querySelector('#visitRestore');
+    if (restoreButton) restoreButton.onclick = restore;
     stage.querySelector('#visitCompany').onchange = event => { company = event.target.value; page = 1; expanded = null; render(stage); stage.querySelector('#visitCompany').focus(); };
     stage.querySelector('#visitSearch').oninput = event => { query = event.target.value; page = 1; expanded = null; renderList(); };
     stage.querySelector('#visitStatus').onchange = event => { status = event.target.value; page = 1; expanded = null; renderList(); };
